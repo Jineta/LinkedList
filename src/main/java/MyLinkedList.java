@@ -8,5 +8,5 @@ public interface MyLinkedList<T> {
     int indexOf(T value) throws Exception; // in spec Object o
     void set(int index,T value) throws Exception;
     T remove(int index) throws Exception;
-    boolean removeV(T value) throws Exception;
+    boolean remove(T value) throws Exception;
 }
