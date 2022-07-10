@@ -4,7 +4,7 @@ import java.lang.Exception;
 public class MyLinkedListImplementation<T> implements MyLinkedList<T> {
     private Node<T> head;
     private Node<T> tail;
-    private int size = 0;
+    private int size;
 
     private class Node<T> {
         private Node<T> next;
@@ -25,45 +25,54 @@ public class MyLinkedListImplementation<T> implements MyLinkedList<T> {
 
     @Override
     public void add(int index, T value) throws Exception {
-        if ((index < 0) || (index > size)) {
-            throw new Exception("Index for Add is out of boundary");
-        } else {
-            if ((size == 0) && (index == 0)) {//  (fist node in the list), 1
+        if (isIndexValid(index, false)) {
+            if (size == 0) {
                 head = new Node<>(null, null, value);
                 tail = head;
-            } else if ((size == 1) && (index == 0)) {// add at the beginning, 1 existing element, 2.1
+            } else if ((size == 1) && (index == 0)) {
                 head = new Node<>(head, null, value);
                 tail.prev = head;
-            } else if ((size == 1) && (index == size)) {// add new element at the end, 1 existing element 2.2
+            } else if ((size == 1) && (index == size)) {
                 tail = new Node<>(null, head, value);
                 head.next = tail;
-            } else if ((size > 1) && (index == size)) {// add new element at the end
+            } else if ((size > 1) && (index == size)) {
                 tail.next = new Node<>(null, tail, value);
                 tail = tail.next;
-            } else if ((size > 1) && (index == 0)) {// add at the beginning, 1 existing element 3.1
+            } else if ((size > 1) && (index == 0)) {
                 head.prev = new Node<>(head, null, value);
                 head = head.prev;
-            } else if ((size > 1) && (index > 0) && (index <= size-1)) {// add at the middle, 1 existing element 3.2
-                Node<T> prevNode = head;
-                Node<T> nextNode = head.next;
-                for (int i = 1; i < index; i++) {
-                    prevNode = prevNode.next;
-                    nextNode = nextNode.next;
-                }
-                prevNode.next = new Node<>(nextNode, prevNode, value);
-                nextNode.prev = prevNode.next;
-          }
+            } else {
+                Node<T> currentNode = findNode(index);
+                Node<T> newNode = new Node<>(currentNode, currentNode.prev, value);
+                currentNode.prev.next = newNode;
+                currentNode.prev = newNode;
+            }
             size++;
         }
     }
 
+    private Node<T> findNode(int index) {
+        Node<T> currentNode = head;
+        for (int i = 1; i <= index; i++) {
+            currentNode = currentNode.next;
+        }
+        return currentNode;
+    }
+
+    private Node<T> findNode(T value) {
+        Node<T> currentNode = head;
+        for (int i = 0; i < size; i++) {
+            if (currentNode.element.equals(value)) {
+                return currentNode;
+            }
+            currentNode = currentNode.next;
+        }
+        return null;
+    }
+
     @Override
     public T get(int index) throws Exception {
-        if (size == 0) {
-            throw new Exception("List is empty");
-        } else if ((index < 0) || (index >= size)) {
-            throw new Exception("Index for Get is out of boundary");
-        } else {
+        if (!isListEmpty() && isIndexValid(index, true)) {
             if (index == 0) {
                 return head.element;
             } else {
@@ -74,15 +83,12 @@ public class MyLinkedListImplementation<T> implements MyLinkedList<T> {
                 return currentNode.element;
             }
         }
+        return null;
     }
 
     @Override
     public void set(int index, T value) throws Exception {
-        if (size == 0) {
-            throw new Exception("List is empty");
-        } else if ((index < 0) || (index >= size)) {
-            throw new Exception("Index for Set is out of boundary");
-        } else {
+        if (!isListEmpty() && isIndexValid(index, true)) {
             Node<T> currentNode = head;
             for (int i = 1; i <= index; i++) {
                 currentNode = currentNode.next;
@@ -100,19 +106,18 @@ public class MyLinkedListImplementation<T> implements MyLinkedList<T> {
 
     @Override
     public int indexOf(T value) throws Exception {
-        if (size == 0) {
-            throw new Exception("List is empty");
-        } else {
+        if (!isListEmpty()) {
             Node<T> currentNode = head;
             for (int i = 0; i < size; i++) {
-                if (currentNode.element == value) {
+                if (currentNode.element.equals(value)) {
                     return i;
                 } else {
                     currentNode = currentNode.next;
                 }
             }
-            return -1;
+
         }
+        return -1;
     }
 
     @Override
@@ -132,12 +137,7 @@ public class MyLinkedListImplementation<T> implements MyLinkedList<T> {
     @Override
     public T remove(int index) throws Exception {
         T deletedElement;
-        if (size == 0) {
-            throw new Exception("List is empty");
-        } else if ((index < 0) || (index >= size)) {
-            throw new Exception("Index for Remove is out of boundary");
-        } else {
-
+        if (!isListEmpty() && isIndexValid(index, true)) {
             if (size == 1) {//1 existing element, 2.1
                 deletedElement = head.element;
                 head = null;
@@ -150,72 +150,69 @@ public class MyLinkedListImplementation<T> implements MyLinkedList<T> {
                 size--;
                 return deletedElement;
             } else if ((index > 0) && (index < size - 1)) {// add at the beginning, 1 existing element 3.2
-
-                Node<T> prevNode = head;
-                Node<T> nextNode = prevNode.next.next;
-                for (int i = 1; i < index; i++) {
-                    prevNode = prevNode.next;
-                    nextNode = nextNode.next;
-                }
-                deletedElement = prevNode.next.element;
-                prevNode.next = nextNode;
-                nextNode.prev = prevNode;
+                Node<T> deletedNode = findNode(index);
+                deletedNode.next.prev = deletedNode.prev;
+                deletedNode.prev.next = deletedNode.next;
                 size--;
-                return deletedElement;
+                return deletedNode.element;
             } else if (index == size - 1) {
                 deletedElement = tail.element;
                 tail = tail.prev;
                 size--;
+                return deletedElement;
             }
         }
         return null;
     }
 
     @Override
-    public boolean removeV(T value) throws Exception {
-        int index = indexOf(value);
-        if (index == -1) {
-            throw new Exception("Element not found");
-        } else if (size == 0) {
-            throw new Exception("List is empty");
-        } else if ((index < 0) || (index >= size)) {
-            throw new Exception("Index for Remove is out of boundary");
-        } else {
-            if (size == 1) {//1 existing element, 2.1
+    public boolean remove(T value) throws Exception {
+        if (!isListEmpty()) {
+            Node<T> deletedNode = findNode(value);
+            if (deletedNode == null) {
+                throw new Exception("Element not found");
+            } else if (size == 1) {
                 head = null;
                 tail = head;
                 size--;
                 return true;
-            } else if (index == 0) {// first element
+            } else if (deletedNode == head) {
                 head = head.next;
                 size--;
                 return true;
-            } else if ((index > 0) && (index < size - 1)) {// add at the beginning, 1 existing element 3.2
-
-                Node<T> prevNode = head;
-                Node<T> nextNode = prevNode.next.next;
-                for (int i = 1; i < index; i++) {
-                    prevNode = prevNode.next;
-                    nextNode = nextNode.next;
-                }
-                prevNode.next = nextNode;
-                nextNode.prev = prevNode;
-                size--;
-                return true;
-            } else if (index == size - 1) {
+            } else if (deletedNode == tail) {
                 tail = tail.prev;
                 size--;
                 return true;
+            } else {
+                deletedNode.next.prev = deletedNode.prev;
+                deletedNode.prev.next = deletedNode.next;
+                size--;
+                return true;
             }
-
         }
         return false;
-
     }
 
     @Override
     public int getSize() {
         return size;
+    }
+
+    public boolean isIndexValid(int index, boolean notEqualSize) throws Exception {
+        if (!notEqualSize && ((index < 0) || (index > size))) {
+            throw new Exception("Index out of boundary");
+        } else if (notEqualSize && ((index < 0) || (index >= size))) {
+            throw new Exception("Index out of boundary");
+        }
+        return true;
+    }
+
+    public boolean isListEmpty() throws Exception {
+        if (size == 0) {
+            throw new Exception("List is empty");
+        }
+        return false;
     }
 }
 
